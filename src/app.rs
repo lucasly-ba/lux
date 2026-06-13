@@ -80,41 +80,54 @@ pub fn run(path: Option<PathBuf>) -> io::Result<()> {
     let _guard = TerminalGuard::enter()?;
     let mut out = io::stdout();
 
+    // Only repaint when something changed, so an idle editor doesn't redraw (and
+    // flicker the cursor) every poll interval.
+    let mut needs_redraw = true;
+    let mut last_size = (0u16, 0u16);
+
     loop {
         // Drain any diagnostics the server has published for our document.
         if let (Some(client), Some(uri)) = (&mut lsp, &lsp_uri) {
             while let Some((doc_uri, diags)) = client.poll_diagnostics() {
                 if &doc_uri == uri {
                     diagnostics = diags;
+                    needs_redraw = true;
                 }
             }
         }
 
         let (cols, rows) = size()?;
+        if (cols, rows) != last_size {
+            last_size = (cols, rows);
+            needs_redraw = true;
+        }
         let text_rows = rows.saturating_sub(1) as usize;
         editor.ensure_visible(text_rows);
 
-        let highlights = match &highlighter {
-            Some(h) => h.spans(editor.buffer.rope(), editor.scroll, text_rows),
-            None => Vec::new(),
-        };
-        let line_diagnostics: Vec<LineDiagnostic> = diagnostics
-            .iter()
-            .map(|d| LineDiagnostic {
-                line: d.line,
-                tag: d.severity.tag(),
-                message: d.message.clone(),
-                color: severity_color(d.severity),
-            })
-            .collect();
+        if needs_redraw {
+            let highlights = match &highlighter {
+                Some(h) => h.spans(editor.buffer.rope(), editor.scroll, text_rows),
+                None => Vec::new(),
+            };
+            let line_diagnostics: Vec<LineDiagnostic> = diagnostics
+                .iter()
+                .map(|d| LineDiagnostic {
+                    line: d.line,
+                    tag: d.severity.tag(),
+                    message: d.message.clone(),
+                    color: severity_color(d.severity),
+                })
+                .collect();
 
-        let view = View {
-            highlights: &highlights,
-            diagnostics: &line_diagnostics,
-            menu: menu.as_ref(),
-        };
-        render(&mut out, &editor, &view, cols, rows, &theme)?;
-        out.flush()?;
+            let view = View {
+                highlights: &highlights,
+                diagnostics: &line_diagnostics,
+                menu: menu.as_ref(),
+            };
+            render(&mut out, &editor, &view, cols, rows, &theme)?;
+            out.flush()?;
+            needs_redraw = false;
+        }
 
         if editor.should_quit {
             break;
@@ -130,6 +143,8 @@ pub fn run(path: Option<PathBuf>) -> io::Result<()> {
         if !matches!(key.kind, KeyEventKind::Press | KeyEventKind::Repeat) {
             continue;
         }
+        // A key was pressed; whatever it does, the screen will need repainting.
+        needs_redraw = true;
         let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
 
         // While the completion popup is open it captures navigation keys.
@@ -209,7 +224,9 @@ fn start_language_server(
     let Some(abs) = rust_file_abspath(path) else {
         return (None, None);
     };
-    let root = abs.parent().unwrap_or(&abs).to_path_buf();
+    // rust-analyzer needs the *workspace* root (the directory containing
+    // Cargo.toml) to analyse the crate, not just the file's directory.
+    let root = workspace_root(&abs);
     match LspClient::start("rust-analyzer", &root) {
         Ok(mut client) => {
             let uri = protocol::path_to_uri(&abs);
@@ -235,6 +252,19 @@ fn rust_file_abspath(path: Option<&Path>) -> Option<PathBuf> {
     std::fs::canonicalize(path)
         .ok()
         .or_else(|| std::env::current_dir().ok().map(|cwd| cwd.join(path)))
+}
+
+/// The nearest ancestor directory of `file` that contains a `Cargo.toml`, or the
+/// file's own directory if none is found.
+fn workspace_root(file: &Path) -> PathBuf {
+    let mut dir = file.parent();
+    while let Some(d) = dir {
+        if d.join("Cargo.toml").is_file() {
+            return d.to_path_buf();
+        }
+        dir = d.parent();
+    }
+    file.parent().unwrap_or(file).to_path_buf()
 }
 
 /// Re-parse for highlighting and tell the language server about the change.

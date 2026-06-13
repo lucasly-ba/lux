@@ -138,7 +138,10 @@ impl LspClient {
     // --- incoming -----------------------------------------------------------
 
     /// Block until the response with `id` arrives or `timeout` elapses.
-    /// Notifications met along the way are stashed for [`poll`](Self::poll).
+    ///
+    /// Diagnostics met along the way are stashed for [`poll_diagnostics`]
+    /// (Self::poll_diagnostics); server requests are answered; anything else is
+    /// dropped.
     fn wait_for_response(&mut self, id: i64, timeout: Duration) -> Option<Json> {
         let deadline = Instant::now() + timeout;
         loop {
@@ -150,7 +153,12 @@ impl LspClient {
                 // The response we were waiting for.
                 return Some(message.get("result").cloned().unwrap_or(Json::Null));
             }
-            self.handle_unsolicited(message);
+            if is_server_request(&message) {
+                self.reply_null(&message);
+            } else if is_publish_diagnostics(&message) {
+                self.stashed.push_back(message);
+            }
+            // Everything else (logs, $/progress, other responses) is dropped.
         }
     }
 
@@ -162,35 +170,40 @@ impl LspClient {
                 .stashed
                 .pop_front()
                 .or_else(|| self.incoming.try_recv().ok())?;
-            if message.get("method").and_then(Json::as_str)
-                == Some("textDocument/publishDiagnostics")
-            {
+            if is_publish_diagnostics(&message) {
                 let params = message.get("params")?;
                 let uri = params.get("uri")?.as_str()?.to_string();
                 return Some((uri, protocol::parse_diagnostics(params)));
             }
-            self.handle_unsolicited(message);
+            // Answer server requests so the server doesn't stall; *drop*
+            // everything else. Critically, non-diagnostic notifications are not
+            // re-stashed here — doing so would re-pop them forever.
+            if is_server_request(&message) {
+                self.reply_null(&message);
+            }
         }
     }
 
-    /// Deal with a message that isn't the response we're waiting for: reply to
-    /// server-to-client requests (so the server doesn't stall) and stash
-    /// notifications for later.
-    fn handle_unsolicited(&mut self, message: Json) {
-        let is_request = message.get("id").is_some() && message.get("method").is_some();
-        if is_request {
-            // Answer with a null result; lux doesn't implement these requests,
-            // but replying keeps the server from blocking.
-            let id = message.get("id").cloned().unwrap_or(Json::Null);
-            let _ = self.send(Json::object([
-                ("jsonrpc", Json::from("2.0")),
-                ("id", id),
-                ("result", Json::Null),
-            ]));
-        } else if message.get("method").is_some() {
-            self.stashed.push_back(message);
-        }
+    /// Reply to a server-to-client request with a null result. lux doesn't
+    /// implement these, but answering keeps the server from blocking.
+    fn reply_null(&mut self, request: &Json) {
+        let id = request.get("id").cloned().unwrap_or(Json::Null);
+        let _ = self.send(Json::object([
+            ("jsonrpc", Json::from("2.0")),
+            ("id", id),
+            ("result", Json::Null),
+        ]));
     }
+}
+
+/// A message with both an id and a method is a request *from* the server.
+fn is_server_request(message: &Json) -> bool {
+    message.get("id").is_some() && message.get("method").is_some()
+}
+
+/// Whether `message` is a `textDocument/publishDiagnostics` notification.
+fn is_publish_diagnostics(message: &Json) -> bool {
+    message.get("method").and_then(Json::as_str) == Some("textDocument/publishDiagnostics")
 }
 
 impl Drop for LspClient {
@@ -239,5 +252,26 @@ mod tests {
         let env = notification_envelope("initialized", Json::Null);
         assert!(env.get("id").is_none());
         assert_eq!(env.get("method").unwrap().as_str(), Some("initialized"));
+    }
+
+    #[test]
+    fn classifies_messages() {
+        // A request from the server has both id and method.
+        let server_request = request_envelope(1, "workspace/configuration", Json::Null);
+        assert!(is_server_request(&server_request));
+        assert!(!is_publish_diagnostics(&server_request));
+
+        // A plain notification (e.g. progress) has a method but no id, and must
+        // NOT be treated as diagnostics — this is the case that used to loop.
+        let progress = notification_envelope("$/progress", Json::Null);
+        assert!(!is_server_request(&progress));
+        assert!(!is_publish_diagnostics(&progress));
+
+        let diag = notification_envelope("textDocument/publishDiagnostics", Json::Null);
+        assert!(is_publish_diagnostics(&diag));
+
+        // A response has an id but no method.
+        let response = Json::object([("id", Json::from(1i64)), ("result", Json::Null)]);
+        assert!(!is_server_request(&response));
     }
 }

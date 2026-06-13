@@ -203,8 +203,11 @@ fn diff_input_edit(old: &str, new: &str) -> Option<InputEdit> {
     }
 
     // Longest common suffix that doesn't overlap the prefix, on a char boundary.
+    // (The two sides index `ob`/`nb` from their own ends on purpose — the
+    // strings differ in length, so clippy's "use the same len" hint is wrong.)
     let mut suffix = 0;
     let max_suffix = (ob.len() - start).min(nb.len() - start);
+    #[allow(clippy::suspicious_operation_groupings)]
     while suffix < max_suffix && ob[ob.len() - 1 - suffix] == nb[nb.len() - 1 - suffix] {
         suffix += 1;
     }
