@@ -137,7 +137,10 @@ mod tests {
         let mut input = Input::new();
         assert_eq!(input.resolve(Mode::Normal, key('h')), Action::MoveLeft);
         assert_eq!(input.resolve(Mode::Normal, key('l')), Action::MoveRight);
-        assert_eq!(input.resolve(Mode::Normal, key('w')), Action::MoveWordForward);
+        assert_eq!(
+            input.resolve(Mode::Normal, key('w')),
+            Action::MoveWordForward
+        );
     }
 
     #[test]
@@ -151,7 +154,10 @@ mod tests {
     fn gg_goes_to_top() {
         let mut input = Input::new();
         assert_eq!(input.resolve(Mode::Normal, key('g')), Action::Noop);
-        assert_eq!(input.resolve(Mode::Normal, key('g')), Action::MoveBufferStart);
+        assert_eq!(
+            input.resolve(Mode::Normal, key('g')),
+            Action::MoveBufferStart
+        );
     }
 
     #[test]
@@ -165,14 +171,26 @@ mod tests {
     #[test]
     fn insert_mode_types_text() {
         let mut input = Input::new();
-        assert_eq!(input.resolve(Mode::Insert, key('a')), Action::InsertChar('a'));
-        assert_eq!(input.resolve(Mode::Insert, KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE)), Action::EnterNormal);
+        assert_eq!(
+            input.resolve(Mode::Insert, key('a')),
+            Action::InsertChar('a')
+        );
+        assert_eq!(
+            input.resolve(
+                Mode::Insert,
+                KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE)
+            ),
+            Action::EnterNormal
+        );
     }
 
     #[test]
     fn d_in_visual_deletes_selection() {
         let mut input = Input::new();
-        assert_eq!(input.resolve(Mode::Visual, key('d')), Action::DeleteSelection);
+        assert_eq!(
+            input.resolve(Mode::Visual, key('d')),
+            Action::DeleteSelection
+        );
     }
 
     #[test]

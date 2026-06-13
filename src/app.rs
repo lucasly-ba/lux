@@ -46,7 +46,12 @@ impl TerminalGuard {
 impl Drop for TerminalGuard {
     fn drop(&mut self) {
         let mut out = io::stdout();
-        let _ = execute!(out, LeaveAlternateScreen, Show, SetCursorStyle::DefaultUserShape);
+        let _ = execute!(
+            out,
+            LeaveAlternateScreen,
+            Show,
+            SetCursorStyle::DefaultUserShape
+        );
         let _ = disable_raw_mode();
     }
 }
@@ -163,8 +168,12 @@ pub fn run(path: Option<PathBuf>) -> io::Result<()> {
         // Ctrl-n in insert mode asks the server for completions.
         if editor.mode == Mode::Insert && ctrl && key.code == KeyCode::Char('n') {
             if let (Some(client), Some(uri)) = (&mut lsp, &lsp_uri) {
-                let items =
-                    client.completion(uri, editor.cursor.line, editor.cursor.column, COMPLETION_TIMEOUT);
+                let items = client.completion(
+                    uri,
+                    editor.cursor.line,
+                    editor.cursor.column,
+                    COMPLETION_TIMEOUT,
+                );
                 if items.is_empty() {
                     editor.message = "no completions".to_string();
                 } else {
@@ -223,9 +232,9 @@ fn rust_file_abspath(path: Option<&Path>) -> Option<PathBuf> {
         return None;
     }
     // canonicalize fails for not-yet-created files; fall back to cwd + path.
-    std::fs::canonicalize(path).ok().or_else(|| {
-        std::env::current_dir().ok().map(|cwd| cwd.join(path))
-    })
+    std::fs::canonicalize(path)
+        .ok()
+        .or_else(|| std::env::current_dir().ok().map(|cwd| cwd.join(path)))
 }
 
 /// Re-parse for highlighting and tell the language server about the change.

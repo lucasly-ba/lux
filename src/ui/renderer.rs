@@ -220,7 +220,11 @@ fn draw_status_line(
     rows: usize,
     theme: &Theme,
 ) -> io::Result<()> {
-    let modified = if editor.buffer.is_modified() { " [+]" } else { "" };
+    let modified = if editor.buffer.is_modified() {
+        " [+]"
+    } else {
+        ""
+    };
     let left = format!(
         " {}  {}{}",
         editor.mode.short_label(),
@@ -232,7 +236,11 @@ fn draw_status_line(
     // cursor's line if there is one.
     let middle = if !editor.message.is_empty() {
         format!("  {}", editor.message)
-    } else if let Some(d) = view.diagnostics.iter().find(|d| d.line == editor.cursor.line) {
+    } else if let Some(d) = view
+        .diagnostics
+        .iter()
+        .find(|d| d.line == editor.cursor.line)
+    {
         format!("  {}: {}", d.tag, d.message)
     } else {
         String::new()
@@ -294,9 +302,10 @@ fn draw_menu(
     let start_x = cursor_x.min(cols.saturating_sub(width));
 
     // Scroll the visible window so the selected item is in view.
-    let first = menu.selected.saturating_sub(rows_shown - 1).min(
-        menu.items.len().saturating_sub(rows_shown),
-    );
+    let first = menu
+        .selected
+        .saturating_sub(rows_shown - 1)
+        .min(menu.items.len().saturating_sub(rows_shown));
 
     for row in 0..rows_shown {
         let idx = first + row;
@@ -376,8 +385,16 @@ mod tests {
     #[test]
     fn color_lookup() {
         let spans = [
-            HighlightSpan { start: 0, end: 3, color: Color::Red },
-            HighlightSpan { start: 5, end: 8, color: Color::Blue },
+            HighlightSpan {
+                start: 0,
+                end: 3,
+                color: Color::Red,
+            },
+            HighlightSpan {
+                start: 5,
+                end: 8,
+                color: Color::Blue,
+            },
         ];
         assert_eq!(color_at(&spans, 1), Some(Color::Red));
         assert_eq!(color_at(&spans, 4), None);

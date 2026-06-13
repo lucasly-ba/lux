@@ -108,7 +108,9 @@ fn unicode_is_indexed_by_char_not_byte() {
 #[test]
 fn handles_text_larger_than_a_leaf() {
     // Force many leaves and at least one rebalance.
-    let big: String = (0..10_000).map(|i| if i % 80 == 79 { '\n' } else { 'x' }).collect();
+    let big: String = (0..10_000)
+        .map(|i| if i % 80 == 79 { '\n' } else { 'x' })
+        .collect();
     let mut r = Rope::from_str(&big);
     assert_eq!(r.len_chars(), big.len());
     assert_eq!(r.to_string(), big);
@@ -139,7 +141,11 @@ impl Rng {
         x
     }
     fn below(&mut self, n: usize) -> usize {
-        if n == 0 { 0 } else { (self.next() % n as u64) as usize }
+        if n == 0 {
+            0
+        } else {
+            (self.next() % n as u64) as usize
+        }
     }
 }
 

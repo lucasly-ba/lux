@@ -76,7 +76,11 @@ impl History {
     pub fn undo(&mut self) -> Option<Edit> {
         let node = &self.nodes[self.current];
         let parent = node.parent?;
-        let revert = node.edit.as_ref().expect("non-root node has an edit").inverse();
+        let revert = node
+            .edit
+            .as_ref()
+            .expect("non-root node has an edit")
+            .inverse();
         self.current = parent;
         Some(revert)
     }

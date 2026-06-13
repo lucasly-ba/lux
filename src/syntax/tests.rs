@@ -38,7 +38,10 @@ fn highlights_rust_keywords() {
     let mut hl = Highlighter::rust();
     hl.reparse(&rope);
     let spans = hl.spans(&rope, 0, 10);
-    assert!(!spans.is_empty(), "expected some highlight spans for Rust code");
+    assert!(
+        !spans.is_empty(),
+        "expected some highlight spans for Rust code"
+    );
 
     // The `fn` keyword at chars 0..2 should be coloured.
     assert!(

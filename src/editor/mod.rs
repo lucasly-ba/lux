@@ -245,7 +245,8 @@ impl Editor {
             Action::EnterInsert => self.set_mode(Mode::Insert),
             Action::InsertAfter => {
                 self.set_mode(Mode::Insert);
-                self.cursor.column = (self.cursor.column + 1).min(self.max_column(self.cursor.line));
+                self.cursor.column =
+                    (self.cursor.column + 1).min(self.max_column(self.cursor.line));
                 self.goal_column = self.cursor.column;
             }
             Action::InsertAtLineStart => {
@@ -393,7 +394,10 @@ impl Editor {
         if idx == 0 {
             return;
         }
-        self.edit(Edit::deletion(idx - 1, self.buffer.rope().slice(idx - 1..idx)));
+        self.edit(Edit::deletion(
+            idx - 1,
+            self.buffer.rope().slice(idx - 1..idx),
+        ));
         self.set_cursor_char(idx - 1);
     }
 
@@ -432,7 +436,9 @@ impl Editor {
         };
         self.edit(Edit::deletion(start, removed));
         self.flush_history();
-        self.cursor = self.buffer.char_to_position(start.min(self.buffer.len_chars()));
+        self.cursor = self
+            .buffer
+            .char_to_position(start.min(self.buffer.len_chars()));
         self.cursor.column = 0;
         self.goal_column = 0;
     }
@@ -442,7 +448,8 @@ impl Editor {
         let at = if above {
             self.buffer.position_to_char(Position::new(line, 0))
         } else {
-            self.buffer.position_to_char(Position::new(line, self.buffer.line_width(line)))
+            self.buffer
+                .position_to_char(Position::new(line, self.buffer.line_width(line)))
         };
         self.set_mode(Mode::Insert);
         self.edit(Edit::insertion(at, "\n"));
@@ -488,7 +495,9 @@ impl Editor {
                 self.buffer.len_chars()
             };
             // If pasting at the very end with no trailing newline, prefix one.
-            let text = if at == self.buffer.len_chars() && !self.buffer.rope().to_string().ends_with('\n') {
+            let text = if at == self.buffer.len_chars()
+                && !self.buffer.rope().to_string().ends_with('\n')
+            {
                 format!("\n{}", self.register.trim_end_matches('\n'))
             } else {
                 self.register.clone()

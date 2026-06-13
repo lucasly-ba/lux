@@ -94,7 +94,13 @@ impl LspClient {
     }
 
     /// Notify the server that a document was opened.
-    pub fn did_open(&mut self, uri: &str, language_id: &str, version: i64, text: &str) -> io::Result<()> {
+    pub fn did_open(
+        &mut self,
+        uri: &str,
+        language_id: &str,
+        version: i64,
+        text: &str,
+    ) -> io::Result<()> {
         self.send_notification(
             "textDocument/didOpen",
             protocol::did_open_params(uri, language_id, version, text),
@@ -117,8 +123,10 @@ impl LspClient {
         character: usize,
         timeout: Duration,
     ) -> Vec<CompletionItem> {
-        let Ok(id) = self.send_request("textDocument/completion", protocol::completion_params(uri, line, character))
-        else {
+        let Ok(id) = self.send_request(
+            "textDocument/completion",
+            protocol::completion_params(uri, line, character),
+        ) else {
             return Vec::new();
         };
         match self.wait_for_response(id, timeout) {
@@ -136,7 +144,9 @@ impl LspClient {
         loop {
             let remaining = deadline.checked_duration_since(Instant::now())?;
             let message = self.incoming.recv_timeout(remaining).ok()?;
-            if message.get("id").and_then(Json::as_i64) == Some(id) && message.get("method").is_none() {
+            if message.get("id").and_then(Json::as_i64) == Some(id)
+                && message.get("method").is_none()
+            {
                 // The response we were waiting for.
                 return Some(message.get("result").cloned().unwrap_or(Json::Null));
             }
@@ -148,8 +158,13 @@ impl LspClient {
     /// call once per frame from the editor loop.
     pub fn poll_diagnostics(&mut self) -> Option<(String, Vec<Diagnostic>)> {
         loop {
-            let message = self.stashed.pop_front().or_else(|| self.incoming.try_recv().ok())?;
-            if message.get("method").and_then(Json::as_str) == Some("textDocument/publishDiagnostics") {
+            let message = self
+                .stashed
+                .pop_front()
+                .or_else(|| self.incoming.try_recv().ok())?;
+            if message.get("method").and_then(Json::as_str)
+                == Some("textDocument/publishDiagnostics")
+            {
                 let params = message.get("params")?;
                 let uri = params.get("uri")?.as_str()?.to_string();
                 return Some((uri, protocol::parse_diagnostics(params)));

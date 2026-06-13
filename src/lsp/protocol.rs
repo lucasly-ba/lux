@@ -176,7 +176,10 @@ pub fn parse_completion(result: &Json) -> Vec<CompletionItem> {
         .filter_map(|item| {
             Some(CompletionItem {
                 label: item.get("label")?.as_str()?.to_string(),
-                detail: item.get("detail").and_then(Json::as_str).map(str::to_string),
+                detail: item
+                    .get("detail")
+                    .and_then(Json::as_str)
+                    .map(str::to_string),
             })
         })
         .collect()
@@ -188,7 +191,10 @@ mod tests {
 
     #[test]
     fn builds_a_path_uri() {
-        assert_eq!(path_to_uri(Path::new("/home/u/a b.rs")), "file:///home/u/a%20b.rs");
+        assert_eq!(
+            path_to_uri(Path::new("/home/u/a b.rs")),
+            "file:///home/u/a%20b.rs"
+        );
     }
 
     #[test]
@@ -222,6 +228,12 @@ mod tests {
         let params = did_change_params("file:///x.rs", 2, "new text");
         let changes = params.get("contentChanges").unwrap().as_array().unwrap();
         assert_eq!(changes[0].get("text").unwrap().as_str(), Some("new text"));
-        assert_eq!(params.pointer(&["textDocument", "version"]).unwrap().as_i64(), Some(2));
+        assert_eq!(
+            params
+                .pointer(&["textDocument", "version"])
+                .unwrap()
+                .as_i64(),
+            Some(2)
+        );
     }
 }

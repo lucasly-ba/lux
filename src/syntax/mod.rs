@@ -120,7 +120,11 @@ impl Highlighter {
         for m in cursor.matches(&self.query, tree.root_node(), self.text.as_bytes()) {
             for cap in m.captures {
                 let node = cap.node;
-                captures.push((node.start_byte(), node.end_byte(), names[cap.index as usize]));
+                captures.push((
+                    node.start_byte(),
+                    node.end_byte(),
+                    names[cap.index as usize],
+                ));
             }
         }
 

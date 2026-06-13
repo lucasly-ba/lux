@@ -327,7 +327,10 @@ impl Rope {
     /// Remove the characters in `range` (`start..end`, half-open).
     pub fn remove(&mut self, range: std::ops::Range<usize>) {
         let std::ops::Range { start, end } = range;
-        assert!(start <= end && end <= self.len_chars(), "remove range out of bounds");
+        assert!(
+            start <= end && end <= self.len_chars(),
+            "remove range out of bounds"
+        );
         if start == end {
             return;
         }

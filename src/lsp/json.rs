@@ -380,7 +380,12 @@ impl Parser {
 
     fn consume_keyword(&mut self, keyword: &str) -> bool {
         let end = self.pos + keyword.len();
-        if end <= self.chars.len() && self.chars[self.pos..end].iter().copied().eq(keyword.chars()) {
+        if end <= self.chars.len()
+            && self.chars[self.pos..end]
+                .iter()
+                .copied()
+                .eq(keyword.chars())
+        {
             self.pos = end;
             true
         } else {
@@ -405,7 +410,13 @@ mod tests {
     fn parses_nested_structures() {
         let j = Json::parse(r#"{"a":[1,2,{"b":true}],"c":"x"}"#).unwrap();
         assert_eq!(j.pointer(&["a"]).unwrap().as_array().unwrap().len(), 3);
-        assert_eq!(j.get("a").unwrap().as_array().unwrap()[2].get("b").unwrap().as_bool(), Some(true));
+        assert_eq!(
+            j.get("a").unwrap().as_array().unwrap()[2]
+                .get("b")
+                .unwrap()
+                .as_bool(),
+            Some(true)
+        );
         assert_eq!(j.get("c").unwrap().as_str(), Some("x"));
     }
 
@@ -424,10 +435,7 @@ mod tests {
 
     #[test]
     fn serializes_objects_with_escapes() {
-        let obj = Json::object([
-            ("name", Json::from("a\"b")),
-            ("n", Json::from(5i64)),
-        ]);
+        let obj = Json::object([("name", Json::from("a\"b")), ("n", Json::from(5i64))]);
         // BTreeMap orders keys, so this is deterministic.
         assert_eq!(obj.to_string(), r#"{"n":5,"name":"a\"b"}"#);
     }
