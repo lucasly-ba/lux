@@ -7,9 +7,16 @@
 //!
 //! lux implements every layer of this itself:
 //! - [`json`] — a hand-written JSON value, parser and serializer,
-//! - `transport` — the `Content-Length` framing over any reader/writer,
-//! - `client` — spawning the server and the request/response lifecycle.
+//! - [`transport`] — the `Content-Length` framing over any reader/writer,
+//! - [`protocol`] — the message bodies and the types lux understands,
+//! - [`client`] — spawning the server and the request/response lifecycle.
 //!
 //! [Language Server Protocol]: https://microsoft.github.io/language-server-protocol/
 
+pub mod client;
 pub mod json;
+pub mod protocol;
+pub mod transport;
+
+pub use client::LspClient;
+pub use protocol::{CompletionItem, Diagnostic, Severity};
