@@ -64,3 +64,31 @@ pub fn highlight_color(name: &str) -> Option<Color> {
     };
     Some(color)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn maps_known_highlight_names() {
+        assert_eq!(highlight_color("keyword"), Some(Color::Magenta));
+        assert_eq!(highlight_color("string"), Some(Color::Green));
+        assert_eq!(highlight_color("comment"), Some(Color::DarkGrey));
+    }
+
+    #[test]
+    fn falls_back_to_the_base_name() {
+        // A dotted capture like `function.method` uses the `function` colour.
+        assert_eq!(
+            highlight_color("function.method"),
+            highlight_color("function")
+        );
+        assert_eq!(highlight_color("keyword.control"), Some(Color::Magenta));
+    }
+
+    #[test]
+    fn unknown_and_plain_names_have_no_colour() {
+        assert_eq!(highlight_color("variable"), None);
+        assert_eq!(highlight_color("something.unknown"), None);
+    }
+}

@@ -16,3 +16,17 @@ impl Position {
         Position { line, column }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn orders_by_line_then_column() {
+        // Ord is derived; positions sort by line first, then column.
+        assert!(Position::new(0, 5) < Position::new(1, 0));
+        assert!(Position::new(1, 2) < Position::new(1, 9));
+        assert_eq!(Position::new(2, 3), Position::new(2, 3));
+        assert_eq!(Position::default(), Position::new(0, 0));
+    }
+}

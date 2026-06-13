@@ -32,3 +32,20 @@ impl Mode {
         matches!(self, Mode::Visual)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn labels_and_predicates() {
+        assert_eq!(Mode::Normal.short_label(), "NOR");
+        assert_eq!(Mode::Insert.short_label(), "INS");
+        assert_eq!(Mode::Visual.short_label(), "VIS");
+
+        assert!(Mode::Insert.is_insert());
+        assert!(!Mode::Normal.is_insert());
+        assert!(Mode::Visual.is_visual());
+        assert!(!Mode::Insert.is_visual());
+    }
+}

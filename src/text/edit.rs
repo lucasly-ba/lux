@@ -64,3 +64,48 @@ impl Edit {
         self.at + self.inserted_chars()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn constructors_classify_correctly() {
+        let ins = Edit::insertion(3, "abc");
+        assert_eq!(ins.removed, "");
+        assert_eq!(ins.inserted, "abc");
+
+        let del = Edit::deletion(3, "xy");
+        assert_eq!(del.removed, "xy");
+        assert_eq!(del.inserted, "");
+    }
+
+    #[test]
+    fn char_counts_use_chars_not_bytes() {
+        // "é😀" is 2 chars but 6 bytes.
+        let edit = Edit::insertion(0, "é😀");
+        assert_eq!(edit.inserted_chars(), 2);
+        assert_eq!(edit.removed_chars(), 0);
+    }
+
+    #[test]
+    fn inverse_swaps_and_is_self_cancelling() {
+        let edit = Edit {
+            at: 5,
+            removed: "old".to_string(),
+            inserted: "new!".to_string(),
+        };
+        let inv = edit.inverse();
+        assert_eq!(inv.at, 5);
+        assert_eq!(inv.removed, "new!");
+        assert_eq!(inv.inserted, "old");
+        // Inverting twice returns the original.
+        assert_eq!(inv.inverse(), edit);
+    }
+
+    #[test]
+    fn end_is_past_inserted_text() {
+        assert_eq!(Edit::insertion(10, "hello").end(), 15);
+        assert_eq!(Edit::deletion(10, "hello").end(), 10); // nothing inserted
+    }
+}
