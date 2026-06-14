@@ -79,6 +79,18 @@ A `flake.nix` provides everything (Rust, a C toolchain, `rust-analyzer`):
 ```sh
 nix develop            # enter the dev environment
 cargo run --release -- samples/demo.rs
+
+nix run . -- samples/demo.rs   # or just run it, no shell needed
+```
+
+To install it onto your `PATH` as `lux` (with `lx` as a short alias, the way
+`hx`/`vim` work) — `rust-analyzer` is wired onto the binary's runtime path, so
+LSP keeps working when launched globally:
+
+```sh
+nix profile install github:lucasly-ba/lux   # or `nix profile install .` locally
+lux samples/demo.rs
+lx                                            # scratch buffer
 ```
 
 #### Without Nix

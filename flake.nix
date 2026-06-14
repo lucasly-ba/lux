@@ -14,6 +14,44 @@
         nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
     in
     {
+      # The editor itself, as an installable package. Build with `nix build`,
+      # install with `nix profile install`, or run straight from the repo with
+      # `nix run`.
+      packages = forAllSystems (pkgs: {
+        default = pkgs.rustPlatform.buildRustPackage {
+          pname = "lux";
+          version = "0.1.0";
+          src = self;
+          cargoLock.lockFile = ./Cargo.lock;
+          # makeWrapper to put rust-analyzer on the runtime PATH; pkg-config in
+          # case a -sys crate probes for libraries. The C toolchain comes from
+          # the default stdenv (rustc shells out to `cc`, and tree-sitter's
+          # grammars are C compiled at build time).
+          nativeBuildInputs = with pkgs; [ pkg-config makeWrapper ];
+          # rust-analyzer is an optional *runtime* dependency: lux spawns it for
+          # diagnostics and completion. Wrapping it onto PATH means LSP keeps
+          # working when `lux` is launched globally, outside the dev shell. The
+          # `lx` alias mirrors `hx`/`vim`-style short names.
+          postInstall = ''
+            wrapProgram $out/bin/lux \
+              --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.rust-analyzer ]}
+            ln -s lux $out/bin/lx
+          '';
+          meta = {
+            description = "A modal, Helix-inspired terminal text editor written from scratch in Rust.";
+            mainProgram = "lux";
+          };
+        };
+      });
+
+      # `nix run` launches the editor (e.g. `nix run . -- samples/demo.rs`).
+      apps = forAllSystems (pkgs: {
+        default = {
+          type = "app";
+          program = pkgs.lib.getExe self.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        };
+      });
+
       # `nix develop` (and `use flake` via direnv) drop you into this shell.
       # Once inside, use `cargo build` / `cargo test` / `cargo run` as usual.
       devShells = forAllSystems (pkgs: {
