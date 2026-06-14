@@ -124,7 +124,7 @@ Normal mode (Vim-like):
 | `o` `O`         | open line below / above         |
 | `v`             | visual mode                     |
 | `x` `dd`        | delete char / line              |
-| `u` `Ctrl-r`    | undo / redo                     |
+| `u` `U`         | undo / redo                     |
 | `p`             | paste                           |
 | `:`             | command line (see below)        |
 | `Ctrl-s`        | save                            |

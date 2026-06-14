@@ -67,7 +67,6 @@ impl Input {
             KeyCode::Char('s') if ctrl => Action::Save,
             KeyCode::Char('q') if ctrl => Action::Quit,
             KeyCode::Char('x') if ctrl => Action::ForceQuit,
-            KeyCode::Char('r') if ctrl => Action::Redo,
             KeyCode::Char(':') => Action::EnterCommand,
 
             // Motions
@@ -116,6 +115,7 @@ impl Input {
             // Normal-mode edits
             KeyCode::Char('x') => Action::DeleteUnderCursor,
             KeyCode::Char('u') => Action::Undo,
+            KeyCode::Char('U') => Action::Redo,
             KeyCode::Char('p') => Action::Paste,
 
             _ => Action::Noop,
@@ -212,7 +212,7 @@ mod tests {
     fn control_keys() {
         let mut input = Input::new();
         assert_eq!(input.resolve(Mode::Normal, ctrl('s')), Action::Save);
-        assert_eq!(input.resolve(Mode::Normal, ctrl('r')), Action::Redo);
+        assert_eq!(input.resolve(Mode::Normal, key('U')), Action::Redo);
         assert_eq!(input.resolve(Mode::Normal, ctrl('q')), Action::Quit);
     }
 

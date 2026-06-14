@@ -50,7 +50,7 @@ fn print_help() {
     println!("    i a I A o O      enter insert mode");
     println!("    v                enter visual mode");
     println!("    x  dd            delete char / line");
-    println!("    u  Ctrl-r        undo / redo");
+    println!("    u  U             undo / redo");
     println!("    p                paste");
     println!("    Ctrl-s           save");
     println!("    Ctrl-q  Ctrl-x   quit / force quit");
