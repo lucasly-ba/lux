@@ -149,13 +149,12 @@ impl Node {
                 ..
             },
         ) = (&left, &right)
+            && lc + rc <= MAX_LEAF_CHARS
         {
-            if lc + rc <= MAX_LEAF_CHARS {
-                let mut s = String::with_capacity(lt.len() + rt.len());
-                s.push_str(lt);
-                s.push_str(rt);
-                return Node::leaf(s);
-            }
+            let mut s = String::with_capacity(lt.len() + rt.len());
+            s.push_str(lt);
+            s.push_str(rt);
+            return Node::leaf(s);
         }
         Node::branch(left, right)
     }

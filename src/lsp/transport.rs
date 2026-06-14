@@ -34,10 +34,10 @@ pub fn read_message(reader: &mut impl BufRead) -> io::Result<Option<Json>> {
         if trimmed.is_empty() {
             break; // end of headers
         }
-        if let Some((name, value)) = trimmed.split_once(':') {
-            if name.trim().eq_ignore_ascii_case("Content-Length") {
-                content_length = value.trim().parse::<usize>().ok();
-            }
+        if let Some((name, value)) = trimmed.split_once(':')
+            && name.trim().eq_ignore_ascii_case("Content-Length")
+        {
+            content_length = value.trim().parse::<usize>().ok();
         }
     }
 

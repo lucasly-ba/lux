@@ -66,7 +66,7 @@ impl Buffer {
         let path = self
             .path
             .clone()
-            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "buffer has no path"))?;
+            .ok_or_else(|| io::Error::other("buffer has no path"))?;
         self.save_as(path)
     }
 

@@ -70,10 +70,10 @@ impl Highlighter {
     pub fn reparse(&mut self, rope: &Rope) {
         let new_text = rope.to_string();
 
-        if let Some(tree) = &mut self.tree {
-            if let Some(edit) = diff_input_edit(&self.text, &new_text) {
-                tree.edit(&edit);
-            }
+        if let Some(tree) = &mut self.tree
+            && let Some(edit) = diff_input_edit(&self.text, &new_text)
+        {
+            tree.edit(&edit);
         }
         self.text = new_text;
 

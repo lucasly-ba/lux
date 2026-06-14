@@ -52,13 +52,13 @@ impl Input {
         let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
 
         // Resolve a pending leader first (the second key of `dd` / `gg`).
-        if let Some(leader) = self.pending.take() {
-            if let KeyCode::Char(c) = key.code {
-                match (leader, c) {
-                    ('d', 'd') => return Action::DeleteLine,
-                    ('g', 'g') => return Action::MoveBufferStart,
-                    _ => {} // fall through and treat `c` as a fresh key
-                }
+        if let Some(leader) = self.pending.take()
+            && let KeyCode::Char(c) = key.code
+        {
+            match (leader, c) {
+                ('d', 'd') => return Action::DeleteLine,
+                ('g', 'g') => return Action::MoveBufferStart,
+                _ => {} // fall through and treat `c` as a fresh key
             }
         }
 
