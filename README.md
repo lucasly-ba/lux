@@ -69,8 +69,8 @@ Everything here is implemented from scratch unless noted:
 
 ## Installing & running
 
-Lux needs a Rust toolchain (1.85+) and a C compiler (tree-sitter grammars are
-C). Install it onto your `PATH` with cargo:
+Lux needs a Rust toolchain (1.88+, for let-chains) and a C compiler
+(tree-sitter grammars are C). Install it onto your `PATH` with cargo:
 
 ```sh
 cargo install --path .
